@@ -1,0 +1,1 @@
+> **Note:** This project is a direct continuation of the [CS362 Group Project](https://github.com/0men1/CS362-Group-Project). Refer to the original repository for the full history of core contributions and initial development phases.
