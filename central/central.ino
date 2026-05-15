@@ -1,33 +1,37 @@
-// Team number: #56
-// Members: Aditi Ghosh (), Dowlah Ali (), Homen Homa (hhoma2)
-// Project Name: Laser Tag
-/**
- * Abstract: This project implements an enhanced laser tag system featuring ESP32 microcontrollers for competitive gameplay and detailed statistics tracking. Each player utilizes a single compact unit containing both IR transmitter and receiver components. Beyond traditional laser tag functionality, our implementation offers real-time health/ammo management, multiple game modes, and individual performance metrics. The streamlined architecture enables sophisticated game mechanics while maintaining simplicity, creating a competitive and data-rich laser tag experience with reduced complexity and hardware requirements.
- */
-
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
 
 #define MAX_PLAYERS 6
 
-#define button1 35
-#define button2 32
-#define button3 33
-
 const char *ssid = "LASERTAG";
 const char *password = "123456789";
 
 WebServer server(80);
 
-struct Player
-{
+struct Player {
     int id;
     int health;
     int ammo;
     int eliminations;
     String callbackURL;
     bool isActive;
+};
+
+
+const uint32_t debounce_delay=50;
+
+struct Button {
+  const uint8_t pin;
+  uint32_t lastDebounceTime;
+  int state;
+  int lastState;
+};
+
+Button buttons[3] = {
+  {22, 0, LOW, LOW},
+  {23, 0, LOW, LOW},
+  {33, 0, LOW, LOW}
 };
 
 Player players[MAX_PLAYERS];
@@ -44,9 +48,9 @@ void setup()
 {
     Serial.begin(115200);
 
-    pinMode(button1, INPUT);
-    pinMode(button2, INPUT);
-    pinMode(button3, INPUT);
+    for (int i = 0; i < 3; i++) {
+      pinMode(buttons[i].pin, INPUT_PULLDOWN);
+    }
 
     WiFi.softAP(ssid, password);
     Serial.print("IP: " + WiFi.softAPIP().toString());
@@ -149,34 +153,44 @@ void handlePlayerElimination()
     }
 }
 
+void executeButtonAction(int buttonIndex) {
+  if (buttonIndex == 0) {
+    // Action for Button 1
+  } else if (buttonIndex == 1) {
+    Serial.println("-----------PLAYERS-----------");
+    
+    for (int i = 0; i < num_players; i++) {
+      Serial.printf("%d, %d, %s, %s\n", 
+                    players[i].id, 
+                    players[i].eliminations, 
+                    players[i].callbackURL.c_str(), 
+                    players[i].isActive ? "Active" : "Not Active");
+    }
+  } else if (buttonIndex == 2) {
+    // Action for Button 3
+  }
+}
+
 void loop()
 {
-    server.handleClient();
+  server.handleClient();
 
-    int button1_reading = digitalRead(button1);
-    static int last_button1_state = LOW;
-    if (button1_reading != last_button1_state && button1_reading == HIGH)
-    {
+  for (int i = 0; i < 3; i++) {
+    int reading = digitalRead(buttons[i].pin);
+
+    if (reading != buttons[i].lastState) {
+      buttons[i].lastDebounceTime = millis();
     }
-    last_button1_state = button1_reading;
 
-    int button2_reading = digitalRead(button2);
-    static int last_button2_state = LOW;
-    if (button2_reading != last_button2_state && button2_reading == HIGH)
-    {
-        Serial.println("-----------PLAYERS-----------");
-        for (Player p : players)
-        {
-            Serial.printf("%d, %d, %s, %s\n", p.id, p.eliminations, p.callbackURL, p.isActive ? "Active" : "Not Active");
+    if ((millis() - buttons[i].lastDebounceTime) > debounce_delay) {
+      if (reading != buttons[i].state) {
+        buttons[i].state = reading;
+
+        if (buttons[i].state == HIGH) {
+          executeButtonAction(i);
         }
+      }
     }
-    last_button2_state = button2_reading;
-
-    int button3_reading = digitalRead(button3);
-    static int last_button3_state = LOW;
-    if (button3_reading != last_button3_state && button3_reading == HIGH)
-    {
-        resetGame();
-    }
-    last_button3_state = button3_reading;
+    buttons[i].lastState = reading;
+  }
 }
