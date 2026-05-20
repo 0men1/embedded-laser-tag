@@ -2,7 +2,7 @@
 
 # Embedded Laser Tag
 
-This repository contains the source code for an embedded laser tag system utilizing ESP32 microcontrollers, infrared (IR) communication, and Bluetooth. The system is distributed across blaster nodes and a central controller.
+This repository contains the source code for an embedded laser tag system utilizing ESP32 microcontrollers. The system is distributed across player nodes and a central controller communicating over a localized Wi-Fi network via HTTP.
 
 ## Architecture
 
