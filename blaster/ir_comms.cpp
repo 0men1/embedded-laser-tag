@@ -1,3 +1,5 @@
+#define DECODE_NEC
+
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <IRremote.h>
@@ -5,26 +7,27 @@
 #include "display.h"
 #include "networking.h"
 #include "player_state.h"
+#include "input.h"
 
 void handleIR() {
   if (IrReceiver.decode()) {
-    if (isAlive) {
-      uint32_t rawData = IrReceiver.decodedIRData.decodedRawData;
+	IRData irData = IrReceiver.decodedIRData;
+    if (irData.protocol == NEC && isAlive) {
+      uint8_t shooterID = irData.address;
+      uint8_t damage = irData.command;
 
-      uint8_t shooterID = (rawData >> 8) & 0xFF;
-      uint8_t damage = rawData & 0xFF;
+	Serial.printf("IR DATA: %d | %d", shooterID, damage);
 
       if (shooterID != PLAYER_ID) {
-        Serial.println("Hit by player " + String(shooterID) + " with damage " +
-                       String(damage));
-        lastShooterID = shooterID;
         processHit(shooterID, damage);
 
         // Flash red when hit
         setStatusLED(LED_BRIGHTNESS, 0, 0);
         tone(BUZZER_PIN, 800, 200);
-        delay(200);
-        updateDisplay(); // Restore normal LED state
+
+	effectStartTime = millis();
+	effectDuration = 200;
+	effectActive = true;
       }
     }
     IrReceiver.resume();
@@ -40,23 +43,26 @@ void sendShot() {
     return;
   }
 
-  uint32_t rawData = (((uint32_t)PLAYER_ID) << 8) | 10;
-  IrSender.sendNECRaw(rawData, 0);
+  IrSender.sendNEC(PLAYER_ID, 10, 0);
+	IrReceiver.start();
   ammo--;
 
   // Flash white when firing
   setStatusLED(LED_BRIGHTNESS, LED_BRIGHTNESS, LED_BRIGHTNESS);
   tone(BUZZER_PIN, 1000, 100);
-  delay(100);
+	effectStartTime = millis();
+	effectDuration = 100;
+	effectActive = true;
 
   updateDisplay();
 }
 
 void processHit(uint8_t id, uint8_t dmg) {
+  Serial.printf("Hit by player %d with damage %d\n",id, dmg );
   if (dmg >= health) {
     health = 0;
     isAlive = false;
-    notifyElimination(PLAYER_ID, lastShooterID);
+    notifyElimination(PLAYER_ID, id);
   } else {
     health -= dmg;
   }

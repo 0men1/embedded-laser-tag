@@ -6,7 +6,6 @@
 #define MAX_AMMO 5
 #define MAX_HEALTH 100
 
-
 #define BUZZER_PIN 32
 
 #define IRT_PIN 21
@@ -20,8 +19,9 @@ extern bool registered;
 
 extern uint8_t ammo;
 extern uint8_t health;
-extern uint8_t eliminations;
-extern uint8_t lastShooterID;
 extern bool isReloading;
+extern uint8_t eliminations;
 
 extern bool wifiConnected;
+
+void reloadAmmo();

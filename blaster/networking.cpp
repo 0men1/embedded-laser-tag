@@ -17,7 +17,7 @@ void notifyElimination(uint8_t playerID, uint8_t killerID) {
   HTTPClient http;
   http.begin("http://" + serverIP.toString() + "/eliminated");
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
-  String data = "id=" + String(PLAYER_ID) + "&eliminatedBy=" + String(lastShooterID);
+  String data = "id=" + String(PLAYER_ID) + "&eliminatedBy=" + String(killerID);
   http.POST(data);
   http.end();
 

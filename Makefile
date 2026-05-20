@@ -8,7 +8,7 @@ TARGET?=blaster
 all: flash monitor
 
 compile:
-	arudino-cli compile --fqbn $(FQBN) $(TARGET)
+	arduino-cli compile --fqbn $(FQBN) $(TARGET)
 
 upload:
 	arduino-cli upload -p $(PORT) --fqbn $(FQBN) $(TARGET)
